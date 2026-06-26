@@ -2,10 +2,11 @@ package main
 
 import (
 	"context"
-	"log"
+	"errors"
+	"fmt"
 	"os"
-	"path/filepath"
 
+	fs "github.com/Vardhanb07/brm"
 	"github.com/urfave/cli/v3"
 )
 
@@ -16,28 +17,10 @@ func main() {
 		UseShortOptionHandling: true,
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
-				Name:    "force",
-				Aliases: []string{"f"},
-				Value:   false,
-				Usage:   "ignore nonexistent files and arguments, never prompt",
-			},
-			&cli.BoolFlag{
-				Name:    "interactive",
-				Aliases: []string{"i"},
-				Value:   false,
-				Usage:   "prompt before every removal",
-			},
-			&cli.BoolFlag{
 				Name:    "recursive",
 				Aliases: []string{"r"},
 				Value:   false,
 				Usage:   "remove directories and their contents recursively",
-			},
-			&cli.BoolFlag{
-				Name:    "dir",
-				Aliases: []string{"d"},
-				Value:   false,
-				Usage:   "remove empty directories",
 			},
 			&cli.BoolFlag{
 				Name:    "verbose",
@@ -48,7 +31,7 @@ func main() {
 			&cli.StringFlag{
 				Name:    "trash",
 				Aliases: []string{"t"},
-				Value:   filepath.Join("~", ".local", "share", "Trash", "files"),
+				Value:   fs.DefaultTrashDir(),
 				Usage:   "places the delete files in trash folder",
 			},
 		},
@@ -58,10 +41,31 @@ func main() {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			return nil
+			file := cmd.StringArg("file")
+			recursive := cmd.Bool("recurive")
+			verbose := cmd.Bool("verbose")
+			trash := cmd.String("trash")
+			if file == "/" || file == "/*" {
+				return errors.New("brm will not delete root dir use rm instead")
+			}
+			fstat, err := os.Stat(file)
+			if err != nil {
+				return err
+			}
+			if fs.CheckTrashDir(trash) {
+				return errors.New("trash dir does not exist")
+			}
+			if fstat.IsDir() && !recursive {
+				return errors.New("brm will not delete a directory without -r, --recursive flag")
+			}
+			if !fstat.IsDir() {
+				return fs.Remove(file, trash, verbose, os.Stdout)
+			}
+			return fs.RemoveDir(file, trash, verbose, os.Stdout)
 		},
 	}
 	if err := cmd.Run(context.Background(), os.Args); err != nil {
-		log.Fatal(err)
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 }

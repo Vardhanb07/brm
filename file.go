@@ -1,0 +1,39 @@
+package fs
+
+import (
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+)
+
+type file struct {
+	name string
+	dir  string
+}
+
+// removes file and places it in trash directory
+func Remove(fpath string, trashdir string, verbose bool, out io.Writer) error {
+	file := file{
+		name: filepath.Base(fpath),
+		dir:  filepath.Join(trashdir, filepath.Dir(fpath)),
+	}
+	if err := os.MkdirAll(file.dir, 0750); err != nil {
+		return err
+	}
+	data, err := os.ReadFile(fpath)
+	if err != nil {
+		return err
+	}
+	f, err := os.Create(filepath.Join(file.dir, file.name))
+	if err != nil {
+		return err
+	}
+	f.Write(data)
+	defer f.Close()
+	if verbose {
+		fmt.Fprintf(out, "copying %v to %v\n", fpath, filepath.Join(file.dir, file.name))
+		fmt.Fprintf(out, "removing %v\n", fpath)
+	}
+	return os.Remove(fpath)
+}
