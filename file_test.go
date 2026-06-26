@@ -38,8 +38,11 @@ func TestRemove(t *testing.T) {
 	setupFiles()
 	defer teardownFiles()
 	var mockStdout bytes.Buffer
-	fs.Remove(testFilePath, trashDir, false, &mockStdout)
-	_, err := os.Open(filepath.Join(trashDir, filepath.Dir(testFilePath), filepath.Base(testFilePath)))
+	err := fs.Remove(testFilePath, trashDir, false, &mockStdout)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = os.Open(filepath.Join(trashDir, filepath.Dir(testFilePath), filepath.Base(testFilePath)))
 	if err != nil {
 		if os.IsNotExist(err) {
 			t.Errorf("expected: %v, got: %v", filepath.Join(trashDir, filepath.Dir(testFilePath), filepath.Base(testFilePath)), trashDir)
@@ -57,7 +60,10 @@ func TestRemoveVerbose(t *testing.T) {
 	setupFiles()
 	defer teardownFiles()
 	var mockStdout bytes.Buffer
-	fs.Remove(testFilePath, trashDir, true, &mockStdout)
+	err := fs.Remove(testFilePath, trashDir, true, &mockStdout)
+	if err != nil {
+		t.Fatal(err)
+	}
 	out := make([]byte, 1024)
 	n, err := mockStdout.Read(out)
 	if err != nil {

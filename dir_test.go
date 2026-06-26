@@ -2,6 +2,7 @@ package fs_test
 
 import (
 	"bytes"
+	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -13,7 +14,7 @@ import (
 
 const (
 	setupDirFile = "setupdir.sh"
-	testDir      = "test1"
+	testDir      = "./test1"
 )
 
 func setupDir() {
@@ -43,11 +44,14 @@ func teardownDir() {
 //	 └── test2
 //	 		 └── file2.txt
 func TestRemoveDir(t *testing.T) {
-	setupDir()
-	defer teardownDir()
+	// setupDir()
+	// defer teardownDir()
 	var mockStdout bytes.Buffer
-	fs.RemoveDir(testDir, trashDir, false, &mockStdout)
-	_, err := os.ReadDir(testDir)
+	err := fs.RemoveDir(testDir, trashDir, false, &mockStdout)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = os.ReadDir(testDir)
 	if os.IsExist(err) {
 		t.Errorf("expected to remove %v", testDir)
 	}
@@ -65,13 +69,18 @@ func TestRemoveDirVerbose(t *testing.T) {
 	setupDir()
 	defer teardownDir()
 	var mockStdout bytes.Buffer
-	fs.RemoveDir(testDir, trashDir, true, &mockStdout)
-	out := make([]byte, 1024)
-	n, err := mockStdout.Read(out)
+	err := fs.RemoveDir(testDir, trashDir, true, &mockStdout)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !bytes.Contains(out[:n], []byte("desending")) {
+	out := make([]byte, 1024)
+	n, err := mockStdout.Read(out)
+	if err != nil {
+		if err != io.EOF {
+			t.Fatal(err)
+		}
+	}
+	if !bytes.Contains(out[:n], []byte("descending")) {
 		t.Errorf("expecting to contain desending, got: %v", string(out[:n]))
 	}
 }
