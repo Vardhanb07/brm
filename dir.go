@@ -23,13 +23,13 @@ func CheckTrashDir(trashDir string) bool {
 }
 
 // removes dir and it's contents
-func RemoveDir(dir string, trashDir string, verbose bool, out io.Writer) error {
+func RemoveDir(dir string, trashDir string, verbose bool, noSave bool, out io.Writer) error {
 	fstat, err := os.Stat(dir)
 	if err != nil {
 		return err
 	}
 	if !fstat.IsDir() {
-		return Remove(dir, trashDir, verbose, out)
+		return Remove(dir, trashDir, verbose, noSave, out)
 	}
 	files, err := os.ReadDir(dir)
 	if err != nil {
@@ -38,7 +38,7 @@ func RemoveDir(dir string, trashDir string, verbose bool, out io.Writer) error {
 	for _, file := range files {
 		nextDir := filepath.Join(dir, file.Name())
 		if !file.IsDir() {
-			err := Remove(nextDir, trashDir, verbose, out)
+			err := Remove(nextDir, trashDir, verbose, noSave, out)
 			if err != nil {
 				return err
 			}
@@ -46,7 +46,7 @@ func RemoveDir(dir string, trashDir string, verbose bool, out io.Writer) error {
 			if verbose {
 				fmt.Fprintf(out, "descending to %v driectory\n", nextDir)
 			}
-			err := RemoveDir(nextDir, trashDir, verbose, out)
+			err := RemoveDir(nextDir, trashDir, verbose, noSave, out)
 			if err != nil {
 				return err
 			}

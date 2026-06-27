@@ -38,7 +38,7 @@ func TestRemove(t *testing.T) {
 	setupFiles()
 	defer teardownFiles()
 	var mockStdout bytes.Buffer
-	err := fs.Remove(testFilePath, trashDir, false, &mockStdout)
+	err := fs.Remove(testFilePath, trashDir, false, false, &mockStdout)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -60,7 +60,7 @@ func TestRemoveVerbose(t *testing.T) {
 	setupFiles()
 	defer teardownFiles()
 	var mockStdout bytes.Buffer
-	err := fs.Remove(testFilePath, trashDir, true, &mockStdout)
+	err := fs.Remove(testFilePath, trashDir, true, false, &mockStdout)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -72,6 +72,42 @@ func TestRemoveVerbose(t *testing.T) {
 		}
 	}
 	if !bytes.Contains(out[:n], []byte("copying")) || !bytes.Contains(out[:n], []byte("removing")) {
-		t.Errorf("expected to have copying and remove, got: %v", string(out[:n]))
+		t.Errorf("expected to have copying and remove, got: %s", out[:n])
+	}
+}
+
+func TestRemoveVerboseNoSave(t *testing.T) {
+	setupFiles()
+	defer teardownFiles()
+	var mockStdout bytes.Buffer
+	err := fs.Remove(testFilePath, trashDir, true, true, &mockStdout)
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := make([]byte, 1024)
+	n, err := mockStdout.Read(out)
+	if err != nil {
+		if err != io.EOF {
+			t.Fatal(err)
+		}
+	}
+	if bytes.Contains(out[:n], []byte("copying")) {
+		t.Errorf("expected to not have copying, got: %s", out[:n])
+	}
+}
+
+func TestRemoveNoSave(t *testing.T) {
+	setupFiles()
+	defer teardownFiles()
+	var mockStdout bytes.Buffer
+	err := fs.Remove(testFilePath, trashDir, false, true, &mockStdout)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.ReadDir(filepath.Join(trashDir, filepath.Dir(testFilePath))); os.IsExist(err) {
+		t.Errorf("expected to remove %s", filepath.Join(trashDir, filepath.Dir(testFilePath)))
+	}
+	if _, err := os.ReadFile(filepath.Join(trashDir, testFilePath)); os.IsExist(err) {
+		t.Errorf("expected to remove %s", filepath.Join(trashDir, testFilePath))
 	}
 }

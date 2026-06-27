@@ -44,10 +44,10 @@ func teardownDir() {
 //	 └── test2
 //	 		 └── file2.txt
 func TestRemoveDir(t *testing.T) {
-	// setupDir()
-	// defer teardownDir()
+	setupDir()
+	defer teardownDir()
 	var mockStdout bytes.Buffer
-	err := fs.RemoveDir(testDir, trashDir, false, &mockStdout)
+	err := fs.RemoveDir(testDir, trashDir, false, false, &mockStdout)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,7 +69,7 @@ func TestRemoveDirVerbose(t *testing.T) {
 	setupDir()
 	defer teardownDir()
 	var mockStdout bytes.Buffer
-	err := fs.RemoveDir(testDir, trashDir, true, &mockStdout)
+	err := fs.RemoveDir(testDir, trashDir, true, false, &mockStdout)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -81,6 +81,6 @@ func TestRemoveDirVerbose(t *testing.T) {
 		}
 	}
 	if !bytes.Contains(out[:n], []byte("descending")) {
-		t.Errorf("expecting to contain desending, got: %v", string(out[:n]))
+		t.Errorf("expecting to contain desending, got: %s", out[:n])
 	}
 }
