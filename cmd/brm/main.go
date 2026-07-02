@@ -23,7 +23,7 @@ func main() {
 	cmd := &cli.Command{
 		Name:                   "brm",
 		Usage:                  "Stores a file that is being deleted",
-		Version:                "v1.0.0",
+		Version:                "v1.0.1",
 		UseShortOptionHandling: true,
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
