@@ -88,8 +88,7 @@ func main() {
 					if err := fs.Remove(file, trash, verbose, noSave, os.Stdout); err != nil {
 						return err
 					}
-				}
-				if err := fs.RemoveDir(file, trash, verbose, noSave, os.Stdout); err != nil {
+				} else if err := fs.RemoveDir(file, trash, verbose, noSave, os.Stdout); err != nil {
 					return err
 				}
 			}
