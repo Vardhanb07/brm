@@ -1,4 +1,4 @@
-package fs_test
+package brm_test
 
 import (
 	"bytes"
@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	fs "github.com/Vardhanb07/brm"
+	"github.com/Vardhanb07/brm"
 )
 
 const (
@@ -38,7 +38,7 @@ func TestRemove(t *testing.T) {
 	setupFiles()
 	defer teardownFiles()
 	var mockStdout bytes.Buffer
-	err := fs.Remove(testFilePath, trashDir, false, false, &mockStdout)
+	err := brm.Remove(testFilePath, trashDir, false, false, &mockStdout)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -60,7 +60,7 @@ func TestRemoveVerbose(t *testing.T) {
 	setupFiles()
 	defer teardownFiles()
 	var mockStdout bytes.Buffer
-	err := fs.Remove(testFilePath, trashDir, true, false, &mockStdout)
+	err := brm.Remove(testFilePath, trashDir, true, false, &mockStdout)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -80,7 +80,7 @@ func TestRemoveVerboseNoSave(t *testing.T) {
 	setupFiles()
 	defer teardownFiles()
 	var mockStdout bytes.Buffer
-	err := fs.Remove(testFilePath, trashDir, true, true, &mockStdout)
+	err := brm.Remove(testFilePath, trashDir, true, true, &mockStdout)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -100,7 +100,7 @@ func TestRemoveNoSave(t *testing.T) {
 	setupFiles()
 	defer teardownFiles()
 	var mockStdout bytes.Buffer
-	err := fs.Remove(testFilePath, trashDir, false, true, &mockStdout)
+	err := brm.Remove(testFilePath, trashDir, false, true, &mockStdout)
 	if err != nil {
 		t.Fatal(err)
 	}
