@@ -8,7 +8,7 @@ import (
 	"runtime"
 	"slices"
 
-	fs "github.com/Vardhanb07/brm"
+	"github.com/Vardhanb07/brm"
 	"github.com/urfave/cli/v3"
 )
 
@@ -23,7 +23,7 @@ func main() {
 	cmd := &cli.Command{
 		Name:                   "brm",
 		Usage:                  "Stores a file that is being deleted",
-		Version:                "v1.0.1",
+		Version:                "v1.0.2",
 		UseShortOptionHandling: true,
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
@@ -34,14 +34,14 @@ func main() {
 			},
 			&cli.BoolFlag{
 				Name:    "verbose",
-				Aliases: []string{"vb", "e"},
+				Aliases: []string{"V"},
 				Value:   false,
 				Usage:   "explain what is being done",
 			},
 			&cli.StringFlag{
 				Name:    "trash",
 				Aliases: []string{"t"},
-				Value:   fs.DefaultTrashDir(),
+				Value:   brm.DefaultTrashDir(),
 				Usage:   "places the delete files in trash folder",
 			},
 			&cli.BoolFlag{
@@ -50,11 +50,17 @@ func main() {
 				Value:   false,
 				Usage:   "removes files without saving them",
 			},
+			&cli.BoolFlag{
+				Name:    "update",
+				Aliases: []string{"u"},
+				Value:   false,
+				Usage:   "updates brm to its latest version",
+			},
 		},
 		Arguments: []cli.Argument{
 			&cli.StringArgs{
 				Name: "files",
-				Min:  1,
+				Min:  0,
 				Max:  -1,
 			},
 		},
@@ -70,26 +76,33 @@ func main() {
 			verbose := cmd.Bool("verbose")
 			trash := cmd.String("trash")
 			noSave := cmd.Bool("no-save")
+			update := cmd.Bool("update")
 			if slices.Contains(files, "/") || slices.Contains(files, "/*") {
 				return errors.New("brm will not delete root dir use rm instead")
 			}
-			for _, file := range files {
-				fstat, err := os.Stat(file)
-				if err != nil {
-					return err
-				}
-				if fs.CheckTrashDir(trash) {
-					return errors.New("trash dir does not exist")
-				}
-				if fstat.IsDir() && !recursive {
-					return errors.New("brm will not delete a directory without -r, --recursive flag")
-				}
-				if !fstat.IsDir() {
-					if err := fs.Remove(file, trash, verbose, noSave, os.Stdout); err != nil {
+			switch {
+			case update:
+				return brm.Update(verbose, os.Stdout)
+			default:
+
+				for _, file := range files {
+					fstat, err := os.Stat(file)
+					if err != nil {
 						return err
 					}
-				} else if err := fs.RemoveDir(file, trash, verbose, noSave, os.Stdout); err != nil {
-					return err
+					if brm.CheckTrashDir(trash) {
+						return errors.New("trash dir does not exist")
+					}
+					if fstat.IsDir() && !recursive {
+						return errors.New("brm will not delete a directory without -r, --recursive flag")
+					}
+					if !fstat.IsDir() {
+						if err := brm.Remove(file, trash, verbose, noSave, os.Stdout); err != nil {
+							return err
+						}
+					} else if err := brm.RemoveDir(file, trash, verbose, noSave, os.Stdout); err != nil {
+						return err
+					}
 				}
 			}
 			return nil

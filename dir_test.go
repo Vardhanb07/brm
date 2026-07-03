@@ -1,4 +1,4 @@
-package fs_test
+package brm_test
 
 import (
 	"bytes"
@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	fs "github.com/Vardhanb07/brm"
+	"github.com/Vardhanb07/brm"
 )
 
 const (
@@ -47,7 +47,7 @@ func TestRemoveDir(t *testing.T) {
 	setupDir()
 	defer teardownDir()
 	var mockStdout bytes.Buffer
-	err := fs.RemoveDir(testDir, trashDir, false, false, &mockStdout)
+	err := brm.RemoveDir(testDir, trashDir, false, false, &mockStdout)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,7 +69,7 @@ func TestRemoveDirVerbose(t *testing.T) {
 	setupDir()
 	defer teardownDir()
 	var mockStdout bytes.Buffer
-	err := fs.RemoveDir(testDir, trashDir, true, false, &mockStdout)
+	err := brm.RemoveDir(testDir, trashDir, true, false, &mockStdout)
 	if err != nil {
 		t.Fatal(err)
 	}
