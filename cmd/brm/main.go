@@ -22,7 +22,7 @@ func main() {
 	cmd := &cli.Command{
 		Name:                   "brm",
 		Usage:                  "Stores a file that is being deleted",
-		Version:                "v1.0.2",
+		Version:                "v1.0.3",
 		UseShortOptionHandling: true,
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
@@ -77,7 +77,6 @@ func main() {
 			case update:
 				return brm.Update(verbose, os.Stdout)
 			default:
-
 				for _, file := range files {
 					resolved, err := brm.PathResolve(file)
 					if err != nil {
