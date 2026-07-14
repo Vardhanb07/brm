@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"runtime"
-	"slices"
 
 	"github.com/Vardhanb07/brm"
 	"github.com/urfave/cli/v3"
@@ -65,9 +64,6 @@ func main() {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			cli.VersionPrinter = func(cmd *cli.Command) {
-				fmt.Fprintf(os.Stdout, "version=%s\n", cmd.Root().Version)
-			}
 			if !checkArch() {
 				return errors.New("platform not supported")
 			}
@@ -77,16 +73,17 @@ func main() {
 			trash := cmd.String("trash")
 			noSave := cmd.Bool("no-save")
 			update := cmd.Bool("update")
-			if slices.Contains(files, "/") || slices.Contains(files, "/*") {
-				return errors.New("brm will not delete root dir use rm instead")
-			}
 			switch {
 			case update:
 				return brm.Update(verbose, os.Stdout)
 			default:
 
 				for _, file := range files {
-					fstat, err := os.Stat(file)
+					resolved, err := brm.PathResolve(file)
+					if err != nil {
+						return err
+					}
+					fstat, err := brm.GetFileOrLinkStats(resolved)
 					if err != nil {
 						return err
 					}
@@ -109,7 +106,7 @@ func main() {
 		},
 	}
 	if err := cmd.Run(context.Background(), os.Args); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		fmt.Fprintf(os.Stderr, "brm: %v\n", err)
 		os.Exit(1)
 	}
 }

@@ -41,3 +41,17 @@ func Remove(fpath string, trashdir string, verbose bool, noSave bool, out io.Wri
 	}
 	return os.Remove(fpath)
 }
+
+func GetFileOrLinkStats(path string) (os.FileInfo, error) {
+	stat, err := os.Lstat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			stat, err = os.Stat(path)
+			if err != nil {
+				return nil, err
+			}
+		}
+		return nil, err
+	}
+	return stat, nil
+}
