@@ -6,9 +6,14 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"runtime/debug"
 
 	"github.com/Vardhanb07/brm"
 	"github.com/urfave/cli/v3"
+)
+
+var (
+	version string
 )
 
 func checkArch() bool {
@@ -18,11 +23,23 @@ func checkArch() bool {
 	return false
 }
 
+func getVersion() string {
+	if version != "" {
+		return version
+	}
+	if info, ok := debug.ReadBuildInfo(); ok {
+		if info.Main.Version != "" && info.Main.Version == "(devel)" {
+			return info.Main.Version
+		}
+	}
+	return "unknown"
+}
+
 func main() {
 	cmd := &cli.Command{
 		Name:                   "brm",
 		Usage:                  "Stores a file that is being deleted",
-		Version:                "v1.0.3",
+		Version:                getVersion(),
 		UseShortOptionHandling: true,
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
