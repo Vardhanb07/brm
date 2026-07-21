@@ -7,6 +7,7 @@ import (
 	"os"
 	"runtime"
 	"runtime/debug"
+	"sync"
 
 	"github.com/Vardhanb07/brm"
 	"github.com/urfave/cli/v3"
@@ -94,31 +95,61 @@ func main() {
 			case update:
 				return brm.Update(verbose, os.Stdout)
 			default:
-				for _, file := range files {
-					resolved, err := brm.PathResolve(file)
-					if err != nil {
-						return err
+				doneCh := make(chan struct{})
+				errCh := make(chan error)
+				filesCh := make(chan string)
+
+				wg := sync.WaitGroup{}
+
+				go func() {
+					defer close(filesCh)
+					for _, file := range files {
+						filesCh <- file
 					}
-					fstat, err := brm.GetFileOrLinkStats(resolved)
-					if err != nil {
-						return err
-					}
-					if brm.CheckTrashDir(trash) {
-						return errors.New("trash dir does not exist")
-					}
-					if fstat.IsDir() && !recursive {
-						return errors.New("brm will not delete a directory without -r, --recursive flag")
-					}
-					if !fstat.IsDir() {
-						if err := brm.Remove(file, trash, verbose, noSave, os.Stdout); err != nil {
-							return err
+				}()
+
+				for i := 0; i < runtime.NumCPU(); i++ {
+					wg.Go(func() {
+						for file := range filesCh {
+							resolved, err := brm.PathResolve(file)
+							if err != nil {
+								errCh <- err
+							}
+							stat, err := brm.GetFileOrLinkStats(resolved)
+							if err != nil {
+								errCh <- err
+							}
+							if brm.CheckTrashDir(trash) {
+								errCh <- errors.New("trash dir does not exist")
+							}
+							if stat.IsDir() && !recursive {
+								errCh <- errors.New("brm will not delete a directory without -r, --recursive flag")
+							}
+							if !stat.IsDir() {
+								if err := brm.Remove(file, trash, verbose, noSave, os.Stdout); err != nil {
+									errCh <- err
+								}
+							} else if err := brm.RemoveDir(file, trash, verbose, noSave, os.Stdout); err != nil {
+								errCh <- err
+							}
 						}
-					} else if err := brm.RemoveDir(file, trash, verbose, noSave, os.Stdout); err != nil {
+					})
+				}
+
+				go func() {
+					wg.Wait()
+					close(doneCh)
+				}()
+
+				for {
+					select {
+					case err := <-errCh:
 						return err
+					case <-doneCh:
+						return nil
 					}
 				}
 			}
-			return nil
 		},
 	}
 	if err := cmd.Run(context.Background(), os.Args); err != nil {
